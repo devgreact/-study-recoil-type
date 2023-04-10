@@ -1,39 +1,45 @@
 # TypeScript 적용
 
-## todo/TodoListFilters.tsx
+## todo/TodoListStats.tsx
 
 ```js
 import React from "react";
-import { atom, useRecoilState } from "recoil";
-// 1. 필터링 된 todo 리스트를 구현하기 위해서 우리는 atom에 저장될 수 있는 필터 기준을 선택해야 한다.
-// 우리가 사용하게 될 필터 옵션은 "Show All", "Show Completed"과 "Show Uncompleted"가 있다.
-// 기본값은 "Show All"이 될 것이다.
-type FilterState = "Show Completed" | "Show All" | "Show Uncompleted";
-export const todoListFilterState = atom<FilterState>({
-  key: "todoListFilterState",
-  default: "Show All",
-});
+import { selector, useRecoilValue } from "recoil";
+import { todoListState } from "./TodoList";
+export const todoListStatsState = selector({
+  key: "TodoListStats",
+  get: ({ get }) => {
+    const todoList = get(todoListState);
+    const totalNum = todoList.length;
+    const totalCompletedNum = todoList.filter(item => item.isComplete).length;
+    const totalUncompletedNum = totalNum - totalCompletedNum;
+    const percentCompleted =
+      totalNum === 0 ? 0 : (totalCompletedNum / totalNum) * 100;
 
-const TodoListFilters = () => {
-  const [filter, setFilter] = useRecoilState(todoListFilterState);
-  const updateFilter: React.ChangeEventHandler<HTMLSelectElement> = ({
-    target: { value },
-  }) => {
-    setFilter(value as FilterState);
-  };
+    return {
+      totalNum,
+      totalCompletedNum,
+      totalUncompletedNum,
+      percentCompleted,
+    };
+  },
+});
+const TodoListStats = () => {
+  const { totalNum, totalCompletedNum, totalUncompletedNum, percentCompleted } =
+    useRecoilValue(todoListStatsState);
+
+  //   const formattedPercentCompleted = Math.round(percentCompleted * 100);
+  const formattedPercentCompleted = Math.round(percentCompleted);
 
   return (
-    <>
-      Filter:
-      <select value={filter} onChange={updateFilter}>
-        <option value="Show All">All</option>
-        <option value="Show Completed">Completed</option>
-        <option value="Show Uncompleted">Uncompleted</option>
-      </select>
-    </>
+    <ul>
+      <li>Total items: {totalNum}</li>
+      <li>Items completed: {totalCompletedNum}</li>
+      <li>Items not completed: {totalUncompletedNum}</li>
+      <li>Percent completed: {formattedPercentCompleted}</li>
+    </ul>
   );
 };
 
-export default TodoListFilters;
-
+export default TodoListStats;
 ```
