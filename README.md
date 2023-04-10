@@ -1,151 +1,71 @@
 # TypeScript 적용
 
-## todo/TodoItemCreator.tsx
-
-```
-npm install --save-dev --exact prettier
-npm install --save-dev eslint
-```
-
-.prettierrc.json
-
-```
-{
-  "singleQuote": false,
-  "semi": true,
-  "useTabs": false,
-  "tabWidth": 2,
-  "trailingComma": "all",
-  "printWidth": 80,
-  "arrowParens": "avoid",
-  "endOfLine": "auto"
-}
-
-```
-
-```
-npm install eslint-config-prettier --save-dev
-```
-
-.eslintrc.js
-
-```js
-module.exports = {
-  env: {
-    browser: true,
-    es2021: true,
-  },
-  extends: ["plugin:react/recommended", "standard-with-typescript", "prettier"],
-  overrides: [],
-  parserOptions: {
-    project: "**/tsconfig.json",
-    ecmaVersion: "latest",
-    sourceType: "module",
-  },
-  plugins: ["react"],
-  rules: {
-    "react/react-in-jsx-scope": "off",
-    "react/prop-types": "off",
-    "@typescript-eslint/explicit-function-return-type": "off",
-  },
-};
-```
-
-TodoItemCreator.tsx
+## todo/TodoItem.tsx
 
 ```js
 import React from "react";
-import { atom, selector, useRecoilValue } from "recoil";
-import TodoItemCreator from "./TodoItemCreator";
-import TodoItem from "./TodoItem";
-import TodoListFilters, { todoListFilterState } from "./TodoListFilters";
-import TodoListStats from "./TodoListStats";
-
-export interface Todo {
-  id: number;
-  text: string;
-  isComplete: boolean;
-}
-
-export const todoListState = atom<Todo[]>({
-  key: "todoListState",
-  default: [],
-});
-
-export const filteredTodoListState = selector({
-  key: "FilteredTodoList",
-  get: ({ get }) => {
-    const filter = get(todoListFilterState);
-    const list = get(todoListState);
-
-    switch (filter) {
-      case "Show Completed":
-        return list.filter((item) => item.isComplete);
-      case "Show Uncompleted":
-        return list.filter((item) => !item.isComplete);
-      default:
-        return list;
-    }
-  },
-});
-
-const TodoList = () => {
-  //   const todoList = useRecoilValue(todoListState);
-  const todoList = useRecoilValue(filteredTodoListState);
-  return (
-    <>
-      <TodoListStats />
-      <TodoListFilters />
-      <TodoItemCreator />
-      {todoList.map((todoItem) => (
-        <TodoItem key={todoItem.id} item={todoItem} />
-      ))}
-    </>
-  );
+import { useRecoilState } from "recoil";
+import { todoListState } from "./TodoList";
+import type { Todo } from "./TodoList";
+type Helper = (arr: Todo[], index: number, newValue: Todo) => Todo[];
+const removeItemAtIndex = (arr: Todo[], index: number): Todo[] => {
+  return [...arr.slice(0, index), ...arr.slice(index + 1)];
+};
+const replaceItemAtIndex: Helper = (
+  arr: Todo[],
+  index: number,
+  newValue: Todo,
+) => {
+  return [...arr.slice(0, index), newValue, ...arr.slice(index + 1)];
 };
 
-export default TodoList;
+const TodoItem = ({ item }: { item: Todo }) => {
+  // TodoList 에 정의한  todoListState를 읽고 항목 텍스트를
+  // 업데이트하고,
+  // 완료된 것으로 표시하고,
+  // 삭제하는 데 사용하는 setter 함수를 얻기 위해 useRecoilState()를 사용한다.
+  const [todoList, setTodoList] = useRecoilState(todoListState);
 
-```
+  const index = todoList.findIndex(listItem => listItem === item);
 
-```js
-import React, { useState } from "react";
-import { useSetRecoilState } from "recoil";
-import { todoListState } from "./TodoList";
-
-// 3. 고유한 Id 생성을 위한 유틸리티
-let id = 0;
-function getId(): number {
-  return id++;
-}
-
-const TodoItemCreator = () => {
-  const [inputValue, setInputValue] = useState("");
-  const setTodoList = useSetRecoilState(todoListState);
-
-  const addItem = () => {
-    setTodoList(oldTodoList => [
-      ...oldTodoList,
-      {
-        id: getId(),
-        text: inputValue,
-        isComplete: false,
-      },
-    ]);
-    setInputValue("");
-  };
-
-  const onChange: React.ChangeEventHandler<HTMLInputElement> = ({
+  const editItemText: React.ChangeEventHandler<HTMLInputElement> = ({
     target: { value },
   }) => {
-    setInputValue(value);
+    const newList = replaceItemAtIndex(todoList, index, {
+      ...item,
+      text: value,
+    });
+
+    setTodoList(newList);
   };
+
+  const toggleItemCompletion = () => {
+    const newList = replaceItemAtIndex(todoList, index, {
+      ...item,
+      isComplete: !item.isComplete,
+    });
+
+    setTodoList(newList);
+  };
+
+  const deleteItem = () => {
+    const newList = removeItemAtIndex(todoList, index);
+
+    setTodoList(newList);
+  };
+
   return (
     <div>
-      <input type="text" value={inputValue} onChange={onChange} />
-      <button onClick={addItem}>Add</button>
+      <input type="text" value={item.text} onChange={editItemText} />
+      <input
+        type="checkbox"
+        checked={item.isComplete}
+        onChange={toggleItemCompletion}
+      />
+      <button onClick={deleteItem}>X</button>
     </div>
   );
 };
-export default TodoItemCreator;
+
+export default TodoItem;
 ```
