@@ -1,38 +1,32 @@
 # TypeScript 적용
 
-## typescript 설치
-
-```
-npm install --save-dev typescript
-```
-
-tsconfig.json
-
-```json
-{
-  "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx"
-  },
-  "include": ["src"]
-}
-```
-
-```
-npm install typescript @types/node @types/react @types/react-dom @types/jest --save-dev
-```
-
 ## index.js > index.tsx
+
+```js
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import { RecoilRoot } from "recoil";
+
+// 오류 코드
+// const root = ReactDOM.createRoot(document.getElementById("root"));
+
+// 풀이 1
+// const root = ReactDOM.createRoot(
+//   document.getElementById("root") ?? document.createElement("div")
+// );
+
+// 풀이 2
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Failed to find the root element");
+const root = ReactDOM.createRoot(rootElement);
+
+root.render(
+  <React.StrictMode>
+    <RecoilRoot>
+      <App />
+    </RecoilRoot>
+  </React.StrictMode>
+);
+```
