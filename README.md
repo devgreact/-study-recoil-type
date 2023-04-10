@@ -1,71 +1,39 @@
 # TypeScript 적용
 
-## todo/TodoItem.tsx
+## todo/TodoListFilters.tsx
 
 ```js
 import React from "react";
-import { useRecoilState } from "recoil";
-import { todoListState } from "./TodoList";
-import type { Todo } from "./TodoList";
-type Helper = (arr: Todo[], index: number, newValue: Todo) => Todo[];
-const removeItemAtIndex = (arr: Todo[], index: number): Todo[] => {
-  return [...arr.slice(0, index), ...arr.slice(index + 1)];
-};
-const replaceItemAtIndex: Helper = (
-  arr: Todo[],
-  index: number,
-  newValue: Todo,
-) => {
-  return [...arr.slice(0, index), newValue, ...arr.slice(index + 1)];
-};
+import { atom, useRecoilState } from "recoil";
+// 1. 필터링 된 todo 리스트를 구현하기 위해서 우리는 atom에 저장될 수 있는 필터 기준을 선택해야 한다.
+// 우리가 사용하게 될 필터 옵션은 "Show All", "Show Completed"과 "Show Uncompleted"가 있다.
+// 기본값은 "Show All"이 될 것이다.
+type FilterState = "Show Completed" | "Show All" | "Show Uncompleted";
+export const todoListFilterState = atom<FilterState>({
+  key: "todoListFilterState",
+  default: "Show All",
+});
 
-const TodoItem = ({ item }: { item: Todo }) => {
-  // TodoList 에 정의한  todoListState를 읽고 항목 텍스트를
-  // 업데이트하고,
-  // 완료된 것으로 표시하고,
-  // 삭제하는 데 사용하는 setter 함수를 얻기 위해 useRecoilState()를 사용한다.
-  const [todoList, setTodoList] = useRecoilState(todoListState);
-
-  const index = todoList.findIndex(listItem => listItem === item);
-
-  const editItemText: React.ChangeEventHandler<HTMLInputElement> = ({
+const TodoListFilters = () => {
+  const [filter, setFilter] = useRecoilState(todoListFilterState);
+  const updateFilter: React.ChangeEventHandler<HTMLSelectElement> = ({
     target: { value },
   }) => {
-    const newList = replaceItemAtIndex(todoList, index, {
-      ...item,
-      text: value,
-    });
-
-    setTodoList(newList);
-  };
-
-  const toggleItemCompletion = () => {
-    const newList = replaceItemAtIndex(todoList, index, {
-      ...item,
-      isComplete: !item.isComplete,
-    });
-
-    setTodoList(newList);
-  };
-
-  const deleteItem = () => {
-    const newList = removeItemAtIndex(todoList, index);
-
-    setTodoList(newList);
+    setFilter(value as FilterState);
   };
 
   return (
-    <div>
-      <input type="text" value={item.text} onChange={editItemText} />
-      <input
-        type="checkbox"
-        checked={item.isComplete}
-        onChange={toggleItemCompletion}
-      />
-      <button onClick={deleteItem}>X</button>
-    </div>
+    <>
+      Filter:
+      <select value={filter} onChange={updateFilter}>
+        <option value="Show All">All</option>
+        <option value="Show Completed">Completed</option>
+        <option value="Show Uncompleted">Uncompleted</option>
+      </select>
+    </>
   );
 };
 
-export default TodoItem;
+export default TodoListFilters;
+
 ```
