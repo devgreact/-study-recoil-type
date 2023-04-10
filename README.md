@@ -1,32 +1,58 @@
 # TypeScript 적용
 
-## index.js > index.tsx
+## todo/TodoList.tsx
 
 ```js
 import React from "react";
-import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
-import { RecoilRoot } from "recoil";
+import { atom, selector, useRecoilValue } from "recoil";
+import TodoItemCreator from "./TodoItemCreator";
+import TodoItem from "./TodoItem";
+import TodoListFilters, { todoListFilterState } from "./TodoListFilters";
+import TodoListStats from "./TodoListStats";
 
-// 오류 코드
-// const root = ReactDOM.createRoot(document.getElementById("root"));
+export interface Todo {
+  id: number;
+  text: string;
+  isComplete: boolean;
+}
 
-// 풀이 1
-// const root = ReactDOM.createRoot(
-//   document.getElementById("root") ?? document.createElement("div")
-// );
+export const todoListState = atom<Todo[]>({
+  key: "todoListState",
+  default: [],
+});
 
-// 풀이 2
-const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("Failed to find the root element");
-const root = ReactDOM.createRoot(rootElement);
+export const filteredTodoListState = selector({
+  key: "FilteredTodoList",
+  get: ({ get }) => {
+    const filter = get(todoListFilterState);
+    const list = get(todoListState);
 
-root.render(
-  <React.StrictMode>
-    <RecoilRoot>
-      <App />
-    </RecoilRoot>
-  </React.StrictMode>
-);
+    switch (filter) {
+      case "Show Completed":
+        return list.filter((item) => item.isComplete);
+      case "Show Uncompleted":
+        return list.filter((item) => !item.isComplete);
+      default:
+        return list;
+    }
+  },
+});
+
+const TodoList = () => {
+  //   const todoList = useRecoilValue(todoListState);
+  const todoList = useRecoilValue(filteredTodoListState);
+  return (
+    <>
+      <TodoListStats />
+      <TodoListFilters />
+      <TodoItemCreator />
+      {todoList.map((todoItem) => (
+        <TodoItem key={todoItem.id} item={todoItem} />
+      ))}
+    </>
+  );
+};
+
+export default TodoList;
+
 ```

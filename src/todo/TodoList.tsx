@@ -4,7 +4,14 @@ import TodoItemCreator from "./TodoItemCreator";
 import TodoItem from "./TodoItem";
 import TodoListFilters, { todoListFilterState } from "./TodoListFilters";
 import TodoListStats from "./TodoListStats";
-export const todoListState = atom({
+
+export interface Todo {
+  id: number;
+  text: string;
+  isComplete: boolean;
+}
+
+export const todoListState = atom<Todo[]>({
   key: "todoListState",
   default: [],
 });
